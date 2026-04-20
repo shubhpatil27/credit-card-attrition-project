@@ -1,3 +1,4 @@
+
 # Python
 __pycache__/
 *.pyc
@@ -50,3 +51,57 @@ outputs/
 
 # Flask cache
 instance/
+=======
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py[cod]
+*.so
+
+# Virtual Environment
+venv/
+.env/
+.venv/
+env/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Logs
+*.log
+airflows/logs/
+
+# Airflow
+airflow.db
+airflow.cfg
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# Data files (optional – uncomment if large)
+# data/raw/
+# data/processed/
+
+# Model files (optional – if large)
+# models/
+
+# Outputs (recommended to ignore generated files)
+outputs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Docker
+*.pid
+
+# Flask cache
+instance/
+

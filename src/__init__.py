@@ -1,0 +1,1 @@
+"""Core project package for credit card attrition prediction."""
