@@ -8,7 +8,8 @@ from src.utils import TARGET_COLUMN, get_categorical_columns, get_numeric_column
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Clean the dataset by handling duplicates, missing values, and basic type cleanup.
+    Clean the dataset by handling duplicates, customer-level deduplication,
+    missing values, and basic type cleanup.
 
     Returns a cleaned DataFrame while keeping the target column intact.
     """
@@ -17,7 +18,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     if TARGET_COLUMN not in df.columns:
         raise KeyError(f"Target column '{TARGET_COLUMN}' was not found in the dataset.")
 
-    # Remove duplicate rows
+    # Remove exact duplicate rows
     df = df.drop_duplicates().reset_index(drop=True)
 
     # Strip string values in object columns
@@ -30,15 +31,18 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
         if col == TARGET_COLUMN:
             continue
         if df[col].dtype == "object":
-            coerced = pd.to_numeric(df[col], errors="ignore")
-            df[col] = coerced
+            df[col] = pd.to_numeric(df[col], errors="ignore")
+
+    # Sort by customer and most recent year, then keep the latest row per customer
+    if {"CLIENTNUM", "Year"}.issubset(df.columns):
+        df = df.sort_values(by=["CLIENTNUM", "Year"], ascending=[True, False])
+        df = df.drop_duplicates(subset="CLIENTNUM", keep="first").reset_index(drop=True)
 
     # Fill missing numeric columns with median
     numeric_cols = get_numeric_columns(df, exclude=[TARGET_COLUMN])
     for col in numeric_cols:
         if df[col].isna().any():
-            median_val = df[col].median()
-            df[col] = df[col].fillna(median_val)
+            df[col] = df[col].fillna(df[col].median())
 
     # Fill missing categorical columns with mode
     categorical_cols = get_categorical_columns(df, exclude=[TARGET_COLUMN])
@@ -48,12 +52,18 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
             fill_val = mode_series.iloc[0] if not mode_series.empty else "Unknown"
             df[col] = df[col].fillna(fill_val)
 
-    # Final clean-up for obvious infinite values
+    # Replace infinite values
     df = df.replace([np.inf, -np.inf], np.nan)
 
-    # If any numeric NaNs remain, fill with median
+    # Fill any remaining numeric NaNs
+    numeric_cols = get_numeric_columns(df, exclude=[TARGET_COLUMN])
     for col in numeric_cols:
         if df[col].isna().any():
             df[col] = df[col].fillna(df[col].median())
+
+    # Drop unnecessary columns after deduplication
+    drop_cols = [col for col in ["CLIENTNUM", "Date_Leave"] if col in df.columns]
+    if drop_cols:
+        df = df.drop(columns=drop_cols)
 
     return df
