@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Customer Attrition Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<h1>Credit Card Attrition Dashboard</h1>
+
+<h2>Overview</h2>
+<p>Total Customers: {{ total }}</p>
+<p>Predicted Churn Customers: {{ churn }}</p>
+
+<h2>Model Performance</h2>
+
+{% if metrics %}
+    {% for model, vals in metrics.items() %}
+        <h3>{{ model }}</h3>
+        <ul>
+            <li>ROC-AUC: {{ vals.roc_auc }}</li>
+            <li>F1 Score: {{ vals.f1 }}</li>
+            <li>Recall: {{ vals.recall }}</li>
+            <li>Precision: {{ vals.precision }}</li>
+        </ul>
+    {% endfor %}
+{% else %}
+    <p>No metrics available yet.</p>
+{% endif %}
+
+</body>
+</html>
