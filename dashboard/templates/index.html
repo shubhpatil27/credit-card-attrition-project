@@ -1,32 +1,46 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Customer Attrition Dashboard</title>
+    <title>Attrition Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-<h1>Credit Card Attrition Dashboard</h1>
+<div class="container">
 
-<h2>Overview</h2>
-<p>Total Customers: {{ total }}</p>
-<p>Predicted Churn Customers: {{ churn }}</p>
+    <h1>📊 Credit Card Attrition Dashboard</h1>
 
-<h2>Model Performance</h2>
+    <div class="cards">
+        <div class="card">
+            <h3>Total Customers</h3>
+            <p>{{ total }}</p>
+        </div>
 
-{% if metrics %}
-    {% for model, vals in metrics.items() %}
-        <h3>{{ model }}</h3>
-        <ul>
-            <li>ROC-AUC: {{ vals.roc_auc }}</li>
-            <li>F1 Score: {{ vals.f1 }}</li>
-            <li>Recall: {{ vals.recall }}</li>
-            <li>Precision: {{ vals.precision }}</li>
-        </ul>
-    {% endfor %}
-{% else %}
-    <p>No metrics available yet.</p>
-{% endif %}
+        <div class="card">
+            <h3>Churn Risk</h3>
+            <p>{{ churn }}</p>
+        </div>
+    </div>
+
+    <h2>📈 Model Performance</h2>
+
+    {% if metrics %}
+        <div class="models">
+        {% for model, vals in metrics.items() %}
+            <div class="model-card">
+                <h3>{{ model }}</h3>
+                <p><strong>ROC-AUC:</strong> {{ vals.roc_auc }}</p>
+                <p><strong>F1 Score:</strong> {{ vals.f1 }}</p>
+                <p><strong>Recall:</strong> {{ vals.recall }}</p>
+                <p><strong>Precision:</strong> {{ vals.precision }}</p>
+            </div>
+        {% endfor %}
+        </div>
+    {% else %}
+        <p>No metrics available yet.</p>
+    {% endif %}
+
+</div>
 
 </body>
 </html>
