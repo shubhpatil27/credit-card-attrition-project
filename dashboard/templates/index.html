@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Attrition Dashboard</title>
+    <title>Credit Card Attrition Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -10,6 +10,7 @@
 
     <h1>📊 Credit Card Attrition Dashboard</h1>
 
+    <!-- Overview Cards -->
     <div class="cards">
         <div class="card">
             <h3>Total Customers</h3>
@@ -17,11 +18,12 @@
         </div>
 
         <div class="card">
-            <h3>Churn Risk</h3>
+            <h3>Predicted Churn</h3>
             <p>{{ churn }}</p>
         </div>
     </div>
 
+    <!-- Model Performance -->
     <h2>📈 Model Performance</h2>
 
     {% if metrics %}
@@ -39,6 +41,28 @@
     {% else %}
         <p>No metrics available yet.</p>
     {% endif %}
+
+    <!-- Visualizations -->
+    <h2>📊 Model Visualizations</h2>
+
+    <div class="plots">
+
+        <div class="plot-card">
+            <h3>ROC Curve</h3>
+            <img src="{{ url_for('static', filename='roc.png') }}" alt="ROC Curve">
+        </div>
+
+        <div class="plot-card">
+            <h3>Feature Importance</h3>
+            <img src="{{ url_for('static', filename='feature_importance.png') }}" alt="Feature Importance">
+        </div>
+
+        <div class="plot-card">
+            <h3>SHAP Summary</h3>
+            <img src="{{ url_for('static', filename='shap.png') }}" alt="SHAP Plot">
+        </div>
+
+    </div>
 
 </div>
 
