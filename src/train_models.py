@@ -20,7 +20,7 @@ def train_models(X_train: pd.DataFrame, y_train: pd.Series) -> dict:
     models = {}
 
     # Logistic Regression
-    lr = LogisticRegression(max_iter=2000, class_weight="balanced")
+    lr = LogisticRegression(max_iter=5000, class_weight="balanced")
     lr.fit(X_train, y)
     models["logistic_regression"] = lr
 
