@@ -1,70 +1,117 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Credit Card Attrition Dashboard</title>
+    <title>Customer Risk Intelligence</title>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
+
 <body>
 
 <div class="container">
 
-    <h1>📊 Credit Card Attrition Dashboard</h1>
+    <h1>🚀 Customer Risk Intelligence</h1>
 
-    <!-- Overview Cards -->
+    <!-- Top Cards -->
     <div class="cards">
         <div class="card">
             <h3>Total Customers</h3>
             <p>{{ total }}</p>
         </div>
 
-        <div class="card">
-            <h3>Predicted Churn</h3>
-            <p>{{ churn }}</p>
+        <div class="card highlight">
+            <h3>High Risk</h3>
+            <p>{{ high_risk }}</p>
         </div>
+
+        <div class="card">
+            <h3>Low Risk</h3>
+            <p>{{ low_risk }}</p>
+        </div>
+
+        <div class="card">
+            <h3>Risk Rate</h3>
+            <p>{{ risk_rate }}%</p>
+        </div>
+    </div>
+
+    <!-- Risk Distribution Chart -->
+    <h2>📊 Risk Distribution</h2>
+    <div class="chart-container">
+    <canvas id="riskChart"></canvas>
+    </div>
+
+    <!-- Insights -->
+    <h2>🧠 Key Insights</h2>
+    <div class="cards">
+        {% for insight in insights %}
+        <div class="card insight">
+            <p>{{ insight }}</p>
+        </div>
+        {% endfor %}
     </div>
 
     <!-- Model Performance -->
     <h2>📈 Model Performance</h2>
-
-    {% if metrics %}
-        <div class="models">
+    <div class="models">
         {% for model, vals in metrics.items() %}
-            <div class="model-card">
-                <h3>{{ model }}</h3>
-                <p><strong>ROC-AUC:</strong> {{ vals.roc_auc }}</p>
-                <p><strong>F1 Score:</strong> {{ vals.f1 }}</p>
-                <p><strong>Recall:</strong> {{ vals.recall }}</p>
-                <p><strong>Precision:</strong> {{ vals.precision }}</p>
-            </div>
-        {% endfor %}
+        <div class="model-card {% if model == 'xgboost' %}best{% endif %}">
+            <h3>{{ model }}</h3>
+            <p>ROC-AUC: {{ vals.roc_auc }}</p>
+            <p>F1 Score: {{ vals.f1 }}</p>
+            <p>Recall: {{ vals.recall }}</p>
+            <p>Precision: {{ vals.precision }}</p>
         </div>
-    {% else %}
-        <p>No metrics available yet.</p>
-    {% endif %}
+        {% endfor %}
+    </div>
 
-    <!-- Visualizations -->
-    <h2>📊 Model Visualizations</h2>
-
+    <!-- Visuals -->
+    <h2>📊 Model Insights</h2>
     <div class="plots">
 
         <div class="plot-card">
             <h3>ROC Curve</h3>
-            <img src="{{ url_for('static', filename='roc.png') }}" alt="ROC Curve">
+            <img src="{{ url_for('static', filename='roc.png') }}">
         </div>
 
         <div class="plot-card">
             <h3>Feature Importance</h3>
-            <img src="{{ url_for('static', filename='feature_importance.png') }}" alt="Feature Importance">
+            <img src="{{ url_for('static', filename='feature_importance.png') }}">
         </div>
 
         <div class="plot-card">
             <h3>SHAP Summary</h3>
-            <img src="{{ url_for('static', filename='shap.png') }}" alt="SHAP Plot">
+            <img src="{{ url_for('static', filename='shap.png') }}">
         </div>
 
     </div>
 
 </div>
+
+<!-- Chart Script -->
+<script>
+const ctx = document.getElementById('riskChart');
+
+
+new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: ['High Risk', 'Low Risk'],
+        datasets: [{
+            data: [{{ high_risk }}, {{ low_risk }}],
+            backgroundColor: ['#ef4444', '#22c55e']
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false
+    }
+});
+</script>
 
 </body>
 </html>

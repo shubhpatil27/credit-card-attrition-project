@@ -33,11 +33,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
         if df[col].dtype == "object":
             df[col] = pd.to_numeric(df[col], errors="ignore")
 
-    # Sort by customer and most recent year, then keep the latest row per customer
-    if {"CLIENTNUM", "Year"}.issubset(df.columns):
-        df = df.sort_values(by=["CLIENTNUM", "Year"], ascending=[True, False])
-        df = df.drop_duplicates(subset="CLIENTNUM", keep="first").reset_index(drop=True)
-
+   
     # Fill missing numeric columns with median
     numeric_cols = get_numeric_columns(df, exclude=[TARGET_COLUMN])
     for col in numeric_cols:

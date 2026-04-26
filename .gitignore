@@ -105,3 +105,25 @@ outputs/
 # Flask cache
 instance/
 
+# environments
+churn_env/
+
+# python
+__pycache__/
+*.pyc
+
+# models
+models/*.pkl
+
+# outputs
+outputs/
+dashboard/static/*.png
+
+# data
+data/processed/
+*.xlsx
+
+# airflow
+logs/
+.airflow/
+

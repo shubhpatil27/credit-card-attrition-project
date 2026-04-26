@@ -1,52 +1,104 @@
-def evaluate_task(**kwargs):
-    import pandas as pd
-    import joblib
-    import json
-    import matplotlib.pyplot as plt
-    from sklearn.metrics import roc_curve, auc
+import sys
+sys.path.append("/opt/airflow")
 
-    # Load data
-    df = pd.read_csv("/opt/airflow/project/data/processed/features.csv")
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from datetime import datetime
+import pandas as pd
+import os
+
+# ----------------------------
+# Task 1: Preprocess
+# ----------------------------
+def preprocess_data():
+    from src.preprocessing import clean_data
+    from src.feature_engineering import create_features
+
+    df = pd.read_excel("/opt/airflow/data/raw/credit_card_og.xlsx")
+
+    df = clean_data(df)
+
+    y = df["Attrition_Flag"].map({
+        "Existing Customer": 0,
+        "Attrited Customer": 1
+    })
 
     X = df.drop("Attrition_Flag", axis=1)
-    y = df["Attrition_Flag"]
+    X = create_features(X)
 
-    # Load models
-    models = {
-        "random_forest": joblib.load("/opt/airflow/project/models/random_forest.pkl"),
-    }
+    X["target"] = y
 
-    model = models["random_forest"]
+    os.makedirs("/opt/airflow/data/processed", exist_ok=True)
+    X.to_csv("/opt/airflow/data/processed/data.csv", index=False)
 
-    # --- ROC CURVE ---
-    probs = model.predict_proba(X)[:, 1]
-    fpr, tpr, _ = roc_curve(y, probs)
-    roc_auc = auc(fpr, tpr)
 
-    plt.figure()
-    plt.plot(fpr, tpr, label=f"AUC = {roc_auc:.2f}")
-    plt.plot([0, 1], [0, 1], linestyle="--")
-    plt.legend()
-    plt.title("ROC Curve")
+# ----------------------------
+# Task 2: Train model (NEW)
+# ----------------------------
+def train_model():
+    from sklearn.model_selection import train_test_split
+    from xgboost import XGBClassifier
+    import joblib
 
-    plt.savefig("/opt/airflow/project/dashboard/static/roc.png")
-    plt.close()
+    df = pd.read_csv("/opt/airflow/data/processed/data.csv")
 
-    # --- FEATURE IMPORTANCE ---
-    importances = model.feature_importances_
-    features = X.columns
+    y = df["target"]
+    X = df.drop("target", axis=1)
 
-    plt.figure(figsize=(10, 6))
-    plt.barh(features, importances)
-    plt.title("Feature Importance")
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
-    plt.savefig("/opt/airflow/project/dashboard/static/feature_importance.png")
-    plt.close()
+    model = XGBClassifier(eval_metric="logloss")
+    model.fit(X_train, y_train)
 
-    # --- METRICS ---
-    from src.evaluate_models import evaluate_models
+    os.makedirs("/opt/airflow/models", exist_ok=True)
+    joblib.dump(model, "/opt/airflow/models/xgboost.pkl")
 
-    metrics = evaluate_models(models, X, y)
 
-    with open("/opt/airflow/project/models/model_metrics.json", "w") as f:
-        json.dump(metrics, f, indent=4)
+# ----------------------------
+# Task 3: Predict
+# ----------------------------
+def predict():
+    import joblib
+
+    df = pd.read_csv("/opt/airflow/data/processed/data.csv")
+
+    model = joblib.load("/opt/airflow/models/xgboost.pkl")
+
+    probs = model.predict_proba(df.drop("target", axis=1))[:, 1]
+
+    risk_df = pd.DataFrame({"risk_score": probs})
+
+    risk_df["risk_level"] = risk_df["risk_score"].apply(
+        lambda x: "Low" if x < 0.5 else "High"
+    )
+
+    os.makedirs("/opt/airflow/outputs/predictions", exist_ok=True)
+    risk_df.to_csv("/opt/airflow/outputs/predictions/risk_scores.csv", index=False)
+
+
+# ----------------------------
+# DAG
+# ----------------------------
+with DAG(
+    dag_id="churn_risk_pipeline",
+    start_date=datetime(2024, 1, 1),
+    schedule_interval="@daily",
+    catchup=False
+) as dag:
+
+    preprocess = PythonOperator(
+        task_id="preprocess",
+        python_callable=preprocess_data
+    )
+
+    train = PythonOperator(
+        task_id="train",
+        python_callable=train_model
+    )
+
+    predict_task = PythonOperator(
+        task_id="predict",
+        python_callable=predict
+    )
+
+    preprocess >> train >> predict_task
